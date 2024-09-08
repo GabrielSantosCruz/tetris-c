@@ -1,6 +1,6 @@
 CC = gcc
-SRC = main.c
-TRG = main
+SRC = tetris.c
+TRG = tetris
 
 $(TRG): $(SRC)
 	$(CC) -o $(TRG) $(SRC)
