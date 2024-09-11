@@ -2,6 +2,11 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <time.h>
+#include "vga.h"
+
+#define video_GREEN 0x07E0
+#define video_ORANGE 0xFC00
+#define video_WHITE 0xFFFF
 
 #define HEIGHT 13
 #define WIDTH 20
@@ -89,7 +94,7 @@ Part editPart(Part part, int posX, int posY){
 void drawGame(); // desenha a matriz do jogo na tela do terminal
 void clearTerminal(); // for linux
 volatile sig_atomic_t flag = 0;
-void handle_int(int sig);
+void handle_int(int sig); 
 void fallTest();
 void delay(int delayTime); // adiciona um delay na execução do codigo
 void insertPart(int numPart, int posX, int posY); // adiciona as peças na matriz do jogo
@@ -98,10 +103,16 @@ void draw(); // executa as funções de adicionar a peça, desenhar e remover pe
 
 void main(){
     signal(SIGINT, handle_int); // intercept SIGINT
+    // fallTest();
+    int matrizTeste[4][4] = {
+    {0, 0, 7, 0},
+    {7, 7, 7, 0},
+    {0, 0, 0, 0},
+    {0, 0, 0, 0},
+    };
+    
+    
     fallTest();
-    /* while(!flag){ // ctrl z for stop
-        draw();
-    } */
 }
 
 // Desenha a matriz do jogo
@@ -110,8 +121,7 @@ void drawGame(){
     printf("Pressione ctrl + z para parar!\n");
     for(int i = 0; i < WIDTH; i++){
         for(int j = 0; j < HEIGHT; j++){
-            switch (displayGame[i][j])
-            {
+            switch (displayGame[i][j]){
             case 0:
                 printf("  ");
                 break;
@@ -144,7 +154,8 @@ void fallTest(){
     Part part = createPart(1, 5);
     for(int i = 1; i < WIDTH - 2; i++){
         insertPart(blockNum, part.posX, part.posY);
-        drawGame();
+        //drawGame();
+        drawMonitor(20, 13, displayGame);    
         eraseParts(blockNum, part.posX, part.posY);
         part = editPart(part, (part.posX + 1), 5);
         delay(300);

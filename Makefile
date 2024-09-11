@@ -1,10 +1,19 @@
 CC = gcc
-SRC = tetris.c
-TRG = tetris
+CFLAGS =-std=c99
+#SRC = tetris.c
+TRG = main
+TAGS = lintelfpgaup
+#VGA = vga.c
 
-$(TRG): $(SRC)
-	$(CC) -o $(TRG) $(SRC)
+all: main
+
+main: tetris.o vga.o
+
+tetris.o: tetris.c vga.h
+	$(CC) $(CFLAGS) -c tetris.c
+
+vga.o: vga.c vga.h
+	$(CC) $(CFLAGS) -c vga.c
 
 run: $(TRG)
-	clear
 	./$(TRG)
