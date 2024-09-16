@@ -1,14 +1,13 @@
 #include <ncurses.h>
 #include <stdlib.h>
 #include <time.h>
-// #include "vga.h"
 
 // Tamanho do campo
 #define WIDTH 13
 #define HEIGHT 20
 #define QUANT_TETRIMONIO 7
 
-// Definição das peças (Tetrominos) 4x4
+/* Definição das peças do jogo (Tetrimonios) */
 int tetrominos[QUANT_TETRIMONIO][4][4] = {
     {
         {1, 1, 1, 1}, 
@@ -49,9 +48,10 @@ int tetrominos[QUANT_TETRIMONIO][4][4] = {
 
 // Estado do jogo
 int field[HEIGHT][WIDTH];  // deixar uma matriz já prédefinida
-int currentPiece, currentRotation, currentX, currentY;
+int currentPiece, currentRotation, currentX, currentY; // dados das peças
 int score = 0;  // Pontuação do jogador
 
+/* Inicia a matriz do jogo colocando todos os seus valores com 0 */
 void initGame() { // ou colocar outros valores para as bordas do campo aqui
     for (int y = 0; y < HEIGHT; y++) {
         for (int x = 0; x < WIDTH; x++) {
@@ -60,14 +60,14 @@ void initGame() { // ou colocar outros valores para as bordas do campo aqui
     }
 }
 
-// Desenha o campo de jogo e a pontuação
+/* Desenha o campo do jogo e a pontuação no terminal */
 void drawField() {
     clear();
     for (int y = 0; y < HEIGHT; y++) {
         for (int x = 0; x < WIDTH; x++) {
             // adicionar switch case aqui
             if (field[y][x] == 1) {
-                mvprintw(y, x, "[]");
+                mvprintw(y, x, "@");
             } else {
                 mvprintw(y, x, ". ");
             }
@@ -77,18 +77,24 @@ void drawField() {
     mvprintw(0, WIDTH + 2, "Score: %d", score);
 }
 
-// Desenha a peça atual
+/* Desenha as peças, 
+Recebe: as informações da peça
+*/
 void drawPiece(int piece, int rotation, int posX, int posY) {
     for (int y = 0; y < 4; y++) {
         for (int x = 0; x < 4; x++) {
             if (tetrominos[piece][rotation][y * 4 + x] == 1) {
-                mvprintw(posY + y, posX + x, "[]");
+                mvprintw(posY + y, posX + x, "@");
             }
         }
     }
 }
 
-// Verifica colisão com bordas e outras peças
+/* 
+Função para checar as colisões com outras peças e as bordas do jogo
+Recebe: as informações da peça a ser checada
+Retorna: 1 caso haja colisão e 0 caso contrário
+*/
 int checkCollision(int piece, int rotation, int posX, int posY) {
     for (int y = 0; y < 4; y++) {
         for (int x = 0; x < 4; x++) {
@@ -105,7 +111,10 @@ int checkCollision(int piece, int rotation, int posX, int posY) {
     return 0;
 }
 
-// Posiciona a peça no campo
+/* 
+Adiciona o valor 1 na matriz do jogo para que a função de desenhar o tabuleiro também desenhe a peça
+Recebe: as informações da peça como argumentos
+*/
 void placePiece(int piece, int rotation, int posX, int posY) {
     for (int y = 0; y < 4; y++) {
         for (int x = 0; x < 4; x++) {
@@ -116,7 +125,9 @@ void placePiece(int piece, int rotation, int posX, int posY) {
     }
 }
 
-// Gera uma nova peça
+/* 
+Gera randomicamente uma nova peça após a primeira ser fixada, e também checa se essa peça já não entra gerando uma colisão, causando assim o fim do jogo
+*/
 void spawnPiece() {
     currentPiece = rand() % QUANT_TETRIMONIO;
     currentRotation = 0;
@@ -132,7 +143,9 @@ void spawnPiece() {
     }
 }
 
-// Limpa linhas completas e adiciona pontos
+/* 
+Faz a verificação na matriz, para fazer a limpeza das linhas completas e também faz a contagem de pontos
+*/
 void clearLines() {
     int linesCleared = 0;
     for (int y = 0; y < HEIGHT; y++) {
@@ -180,7 +193,7 @@ int main() {
 
     while (1) {
         clock_t now = clock();
-        int ch = getch();
+        int ch = getch(); // para receber as entradas do teclado
         int newX = currentX;
         int newY = currentY;
         int newRotation = currentRotation;
@@ -201,13 +214,13 @@ int main() {
                 return 0;
         }
 
-        // Verifica colisão antes de mover
+        // Verifica colisão antes de mover a peça
         if (!checkCollision(currentPiece, currentRotation, newX, newY)) {
             currentX = newX;
             currentY = newY;
         }
 
-        // Movimento automático (queda da peça)
+        // queda automática da peça
         if ((now - lastFall) * 1000 / CLOCKS_PER_SEC >= fallInterval) {
             if (!checkCollision(currentPiece, currentRotation, currentX, currentY + 1)) {
                 currentY++;
@@ -223,7 +236,7 @@ int main() {
         // Desenha o campo e a peça
         drawField();
         drawPiece(currentPiece, currentRotation, currentX, currentY);
-        refresh();
+        refresh(); // para atualizar o terminal do computador   
     }
 
     endwin();
