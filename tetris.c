@@ -1,244 +1,303 @@
-#include <ncurses.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <time.h>
+#include "vga.h"
 
-// Tamanho do campo
-#define WIDTH 13
-#define HEIGHT 20
-#define QUANT_TETRIMONIO 7
+#define HEIGHT 13
+#define WIDTH 20
 
-/* Definição das peças do jogo (Tetrimonios) */
-int tetrominos[QUANT_TETRIMONIO][4][4] = {
-    {
-        {1, 1, 1, 1}, 
-        {0, 0, 0, 0}, 
-        {0, 0, 0, 0}, 
-        {0, 0, 0, 0}},
-    {
-        {1, 0, 0, 0}, 
-        {1, 1, 1, 0}, 
-        {0, 0, 0, 0}, 
-        {0, 0, 0, 0}}, 
-    {
-        {0, 0, 1, 0}, 
-        {1, 1, 1, 0}, 
-        {0, 0, 0, 0}, 
-        {0, 0, 0, 0}}, 
-    {
-        {1, 1, 0, 0}, 
-        {1, 1, 0, 0}, 
-        {0, 0, 0, 0}, 
-        {0, 0, 0, 0}}, 
-    {
-        {0, 1, 1, 0}, 
-        {1, 1, 0, 0}, 
-        {0, 0, 0, 0}, 
-        {0, 0, 0, 0}}, 
-    {
-        {0, 1, 0, 0}, 
-        {1, 1, 1, 0}, 
-        {0, 0, 0, 0}, 
-        {0, 0, 0, 0}}, 
-    {
-        {1, 1, 0, 0}, 
-        {0, 1, 1, 0}, 
-        {0, 0, 0, 0}, 
-        {0, 0, 0, 0}}, 
+int displayGame[WIDTH][HEIGHT] = {
+    {5, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4}
 };
 
-// Estado do jogo
-int field[HEIGHT][WIDTH];  // deixar uma matriz já prédefinida
-int currentPiece, currentRotation, currentX, currentY; // dados das peças
-int score = 0;  // Pontuação do jogador
+int tetrimonios[7][4][4] = {
+    {
+    {0, 0, 0, 0},
+    {7, 7, 7, 7},
+    {0, 0, 0, 0},
+    {0, 0, 0, 0},
+    }, {
+    {0, 7, 0, 0},
+    {7, 7, 7, 0},
+    {0, 0, 0, 0},
+    {0, 0, 0, 0},
+    }, {
+    {7, 7, 0, 0},
+    {7, 7, 0, 0},
+    {0, 0, 0, 0},
+    {0, 0, 0, 0},
+    }, {
+    {7, 0, 0, 0},
+    {7, 7, 7, 0},
+    {0, 0, 0, 0},
+    {0, 0, 0, 0},
+    }, {
+    {0, 7, 7, 0},
+    {7, 7, 0, 0},
+    {0, 0, 0, 0},
+    {0, 0, 0, 0},
+    }, {
+    {7, 7, 0, 0},
+    {0, 7, 7, 0},
+    {0, 0, 0, 0},
+    {0, 0, 0, 0},
+    }, {
+    {0, 0, 7, 0},
+    {7, 7, 7, 0},
+    {0, 0, 0, 0},
+    {0, 0, 0, 0},
+    }, 
+};
 
-/* Inicia a matriz do jogo colocando todos os seus valores com 0 */
-void initGame() { // ou colocar outros valores para as bordas do campo aqui
-    for (int y = 0; y < HEIGHT; y++) {
-        for (int x = 0; x < WIDTH; x++) {
-            field[y][x] = 0;
+typedef struct{
+    int posX, posY;
+} Part;
+
+Part createPart(int posX, int posY){
+    Part part;
+    part.posX = posX;
+    part.posY = posY;
+    return part;
+}
+
+void editPart(Part *part, int posX, int posY){
+    part->posX = posX;
+    part->posY = posY;
+};
+
+
+void drawGame(); // desenha a matriz do jogo na tela do terminal
+void clearTerminal(); // for linux
+volatile sig_atomic_t flag = 0;
+void handle_int(int sig); 
+void fallTest();
+void delay(int delayTime); // adiciona um delay na execução do codigo
+void insertPart(int numPart, int posX, int posY); // adiciona as peças na matriz do jogo
+void eraseParts(int numPart, int posX, int posY); // remove as peças da matriz do jogo
+void draw(); // executa as funções de adicionar a peça, desenhar e remover peça
+int isValidMove(int numPart, int posX, int posY); // verifica se o movimento horizontal é válido
+int isValidHorizontalMove(int numPart, int posX, int posY, int deltaX); // verifica se o movimento horizontal é válido
+void horizonMove(int numPart, Part *part, int deltaX);
+
+void main(){
+    signal(SIGINT, handle_int); // Intercepta SIGINT
+    srand(time(NULL));          // Inicializa o gerador de números aleatórios
+    initializeNextPiece();     // Inicializa a primeira peça
+    fallTest();
+}
+
+int currentPiece;   // Índice da peça atual
+int nextPiece;      // Índice da próxima peça
+
+// Função para escolher um índice de peça aleatório
+int getRandomPiece() {
+    return rand() % 7; // Escolhe aleatoriamente um índice entre 0 e 6
+}
+
+// Inicializa a próxima peça
+void initializeNextPiece() {
+    nextPiece = getRandomPiece();
+}
+
+// Inicializa a peça atual
+void initializeCurrentPiece() {
+    currentPiece = nextPiece; // A peça atual é a próxima peça
+    initializeNextPiece();    // Define a próxima peça para a próxima vez
+}
+
+
+// Desenha a matriz do jogo
+void drawGame(){
+    clearTerminal();
+    printf("Pressione ctrl + z para parar!\n");
+    for(int i = 0; i < WIDTH; i++){
+        for(int j = 0; j < HEIGHT; j++){
+            switch (displayGame[i][j]){
+            case 0:
+                printf("  ");
+                break;
+            
+            case 7:
+                printf("[]");
+                break;
+            
+            default:
+                printf("@ ");
+                break;
+            }
         }
+        printf("\n");
     }
 }
 
-/* Desenha o campo do jogo e a pontuação no terminal */
-void drawField() {
-    clear();
-    for (int y = 0; y < HEIGHT; y++) {
-        for (int x = 0; x < WIDTH; x++) {
-            // adicionar switch case aqui
-            if (field[y][x] == 1) {
-                mvprintw(y, x, "@");
-            } else {
-                mvprintw(y, x, ". ");
+// limpa o terminal
+void clearTerminal(){
+    system("clear");
+}
+
+void handle_int(int sig){
+  flag = 1;
+}
+
+// teste de queda do jogo
+void fallTest() {
+    // Inicializa a primeira peça
+    initializeCurrentPiece();
+
+    Part part = createPart(1, 5); // Começa na parte superior central
+    int canMove = 1;
+    
+    while (canMove) {
+        insertPart(currentPiece, part.posX, part.posY);
+        drawGame();
+        
+        drawMonitor(WIDTH, HEIGHT, displayGame, nextPiece, 4, 4, tetrimonios);
+
+        eraseParts(currentPiece, part.posX, part.posY);
+
+        // Tenta mover a peça para baixo
+        if (isValidMove(currentPiece, part.posX + 1, part.posY)) {
+            editPart(&part, part.posX + 1, part.posY);
+        } else {
+            // Não é possível mover para baixo, fixa a peça e inicia uma nova
+            insertPart(currentPiece, part.posX, part.posY);
+            // Verifica se a nova peça pode ser colocada
+            if (!isValidMove(nextPiece, 1, 5)) {
+                printf("Game Over\n");
+                break; // Fim do jogo
+            }
+            // Inicializa a próxima peça
+            initializeCurrentPiece();
+            part = createPart(1, 5); // Reseta a posição da nova peça
+        }
+
+        delay(300);
+
+        // Simulação de entrada para movimento horizontal
+        // Para teste, vamos mover a peça para a direita ou esquerda
+        /* if (/* condição para mover para a direita ) {
+            moveHorizontal(blockNum, &part, 1); // Move para a direita
+        } else if (/* condição para mover para a esquerda ) {
+            moveHorizontal(blockNum, &part, -1); // Move para a esquerda
+        } */
+    }
+}
+
+
+
+void delay(int delayTime){
+    int miliSec = 1000 * delayTime;
+    clock_t startTime = clock();
+    while(clock() < startTime + miliSec);
+}
+
+void insertPart(int numPart, int posX, int posY){
+    for(int i = 0; i < 4; i++){
+        for(int j = 0; j < 4; j++){
+            if(tetrimonios[numPart][i][j] != 0){
+                displayGame[posX + i][posY + j] = 7;
             }
         }
     }
-    // Exibe a pontuação no canto da tela
-    mvprintw(0, WIDTH + 2, "Score: %d", score);
 }
 
-/* Desenha as peças, 
-Recebe: as informações da peça
-*/
-void drawPiece(int piece, int rotation, int posX, int posY) {
-    for (int y = 0; y < 4; y++) {
-        for (int x = 0; x < 4; x++) {
-            if (tetrominos[piece][rotation][y * 4 + x] == 1) {
-                mvprintw(posY + y, posX + x, "@");
+void eraseParts(int numPart, int posX, int posY){
+    for(int i = 0; i < 4; i++){
+        for(int j = 0; j < 4; j++){
+            if(tetrimonios[numPart][i][j] != 0){
+                displayGame[posX + i][posY + j] = 0;
             }
         }
     }
 }
 
-/* 
-Função para checar as colisões com outras peças e as bordas do jogo
-Recebe: as informações da peça a ser checada
-Retorna: 1 caso haja colisão e 0 caso contrário
-*/
-int checkCollision(int piece, int rotation, int posX, int posY) {
-    for (int y = 0; y < 4; y++) {
-        for (int x = 0; x < 4; x++) {
-            int block = tetrominos[piece][rotation][y * 4 + x];
-            if (block) {
-                int newX = posX + x;
-                int newY = posY + y;
-                if (newX < 0 || newX >= WIDTH || newY >= HEIGHT || (newY >= 0 && field[newY][newX] != 0)) {
-                    return 1;
+void draw(){
+    clearTerminal();
+    insertPart(3, 1, 2);
+    drawGame();
+}
+
+int isValidMove(int numPart, int posX, int posY) {
+    // Verifica se as coordenadas estão dentro dos limites da matriz
+    if (posX < 0 || posY < 0 || posX + 4 > WIDTH +1|| posY + 4 > HEIGHT) {
+        return 0; // Fora dos limites
+    }
+
+    // Verifica se a posição da peça colide com outra peça já colocada
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            if (tetrimonios[numPart][i][j] != 0) {
+                int newX = posX + i;
+                int newY = posY + j;
+
+                // Se a nova posição estiver ocupada por uma peça existente
+                if (newX >= 0 && newX < WIDTH && newY >= 0 && newY < HEIGHT) {
+                    if (displayGame[newX][newY] != 0) {
+                        return 0; // Colidiu com uma peça existente
+                    }
+                } else {
+                    return 0; // Fora dos limites
                 }
             }
         }
     }
-    return 0;
+    return 1; // Movimento válido
 }
 
-/* 
-Adiciona o valor 1 na matriz do jogo para que a função de desenhar o tabuleiro também desenhe a peça
-Recebe: as informações da peça como argumentos
-*/
-void placePiece(int piece, int rotation, int posX, int posY) {
-    for (int y = 0; y < 4; y++) {
-        for (int x = 0; x < 4; x++) {
-            if (tetrominos[piece][rotation][y * 4 + x] == 1) {
-                field[posY + y][posX + x] = 1;
-            }
-        }
+int isValidHorizontalMove(int numPart, int posX, int posY, int deltaX) {
+    // deltaX é o deslocamento horizontal desejado (positivo para direita, negativo para esquerda)
+
+    // Verifica se as coordenadas estão dentro dos limites da matriz
+    if (posX + deltaX < 0 || posX + deltaX + 4 > WIDTH) {
+        return 0; // Fora dos limites horizontais
     }
-}
 
-/* 
-Gera randomicamente uma nova peça após a primeira ser fixada, e também checa se essa peça já não entra gerando uma colisão, causando assim o fim do jogo
-*/
-void spawnPiece() {
-    currentPiece = rand() % QUANT_TETRIMONIO;
-    currentRotation = 0;
-    currentX = WIDTH / 2 - 2;
-    currentY = 0;
+    // Verifica se a posição da peça colide com outra peça já colocada
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            if (tetrimonios[numPart][i][j] != 0) {
+                int newX = posX + deltaX + i;
+                int newY = posY + j;
 
-    // Se a nova peça já colide ao ser gerada, o jogo termina
-    if (checkCollision(currentPiece, currentRotation, currentX, currentY)) {
-        endwin();
-        printf("Game Over!\n");
-        printf("Your Score: %d\n", score);
-        exit(0);
-    }
-}
-
-/* 
-Faz a verificação na matriz, para fazer a limpeza das linhas completas e também faz a contagem de pontos
-*/
-void clearLines() {
-    int linesCleared = 0;
-    for (int y = 0; y < HEIGHT; y++) {
-        int fullLine = 1;
-        for (int x = 0; x < WIDTH; x++) {
-            if (field[y][x] == 0) {
-                fullLine = 0;
-                break;
-            }
-        }
-        if (fullLine) {
-            linesCleared++;
-            for (int ny = y; ny > 0; ny--) {
-                for (int x = 0; x < WIDTH; x++) {
-                    field[ny][x] = field[ny - 1][x];
+                // Se a nova posição estiver ocupada por uma peça existente
+                if (newX >= 0 && newX < WIDTH && newY >= 0 && newY < HEIGHT) {
+                    if (displayGame[newX][newY] != 0 && displayGame[newX][newY] != 7) {
+                        return 0; // Colidiu com uma peça existente
+                    }
+                } else {
+                    return 0; // Fora dos limites horizontais
                 }
             }
-            for (int x = 0; x < WIDTH; x++) {
-                field[0][x] = 0;
-            }
         }
     }
-    // Adiciona pontos dependendo de quantas linhas foram limpas
-    if (linesCleared == 1) score += 100;
-    else if (linesCleared == 2) score += 300;
-    else if (linesCleared == 3) score += 500;
-    else if (linesCleared == 4) score += 800;
+    return 1; // Movimento horizontal válido
 }
 
-int main() {
-    // Inicializa ncurses e configurações
-    initscr();
-    cbreak();
-    noecho();
-    curs_set(0);
-    timeout(100);  // Tempo de espera para input
-    keypad(stdscr, TRUE);
-
-    srand(time(0));
-    initGame();
-    spawnPiece();
-
-    clock_t lastFall = clock();  // Tempo da última queda
-    int fallInterval = 2;  // Intervalo de queda em milissegundos
-
-    while (1) {
-        clock_t now = clock();
-        int ch = getch(); // para receber as entradas do teclado
-        int newX = currentX;
-        int newY = currentY;
-        int newRotation = currentRotation;
-
-        // Movimentação do jogador
-        switch (ch) {
-            case KEY_LEFT:
-                newX--;
-                break;
-            case KEY_RIGHT:
-                newX++;
-                break;
-            case KEY_DOWN:
-                newY++;
-                break;
-            case 'q':  // Sair do jogo
-                endwin();
-                return 0;
-        }
-
-        // Verifica colisão antes de mover a peça
-        if (!checkCollision(currentPiece, currentRotation, newX, newY)) {
-            currentX = newX;
-            currentY = newY;
-        }
-
-        // queda automática da peça
-        if ((now - lastFall) * 1000 / CLOCKS_PER_SEC >= fallInterval) {
-            if (!checkCollision(currentPiece, currentRotation, currentX, currentY + 1)) {
-                currentY++;
-            } else {
-                // Coloca a peça no campo e gera uma nova
-                placePiece(currentPiece, currentRotation, currentX, currentY);
-                clearLines();
-                spawnPiece();
-            }
-            lastFall = now;
-        }
-
-        // Desenha o campo e a peça
-        drawField();
-        drawPiece(currentPiece, currentRotation, currentX, currentY);
-        refresh(); // para atualizar o terminal do computador   
+void horizonMove(int numPart, Part *part, int deltaX) {
+    // Tenta mover a peça horizontalmente
+    if (isValidHorizontalMove(numPart, part->posX, part->posY, deltaX)) {
+        eraseParts(numPart, part->posX, part->posY); // Remove a peça da posição atual
+        part->posX += deltaX; // Atualiza a posição horizontal
+        insertPart(numPart, part->posX, part->posY); // Insere a peça na nova posição
     }
-
-    endwin();
-    return 0;
 }

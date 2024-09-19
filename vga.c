@@ -28,7 +28,7 @@ void drawMonitor(int rows, int cows, int matriz[rows][cows]){
                         continue;
                     case 0:
                         video_box((j*11+90), (i*11+10), (j*11+10+90), (i*11+10+10), video_WHITE); // cor do fundo
-                   
+                        continue;
                 }
             }
         }
