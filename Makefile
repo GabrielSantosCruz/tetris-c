@@ -1,28 +1,19 @@
 CC = gcc
-CFLAGS = -std=c99
-SRC = tetris.c vga.c
+CFLAGS =-std=c99
+#SRC = tetris.c
 TRG = main
-HEADERS = vga.h
-OBJ = tetris.o vga.o
+TAGS = lintelfpgaup
+#VGA = vga.c
 
-# Alvo padrão
-all: $(TRG)
+all: main
 
-# Regra para criar o executável
-$(TRG): $(OBJ)
-	$(CC) $(CFLAGS) tetris.o vga.o -lintelfpgaup -o $(TRG)
+main: tetris.o vga.o
 
-# Regras para compilar os arquivos .c em .o
-tetris.o: tetris.c $(HEADERS)
-	$(CC) $(CFLAGS) -lintelfpgaup -c tetris.c
+tetris.o: tetris.c vga.h
+	$(CC) $(CFLAGS) -c tetris.c
 
-vga.o: vga.c $(HEADERS)
-	$(CC) $(CFLAGS) -lintelfpgaup -c vga.c
+vga.o: vga.c vga.h
+	$(CC) $(CFLAGS) -c vga.c
 
-# Regra para rodar o programa
 run: $(TRG)
 	./$(TRG)
-
-# Limpar arquivos compilados
-clean:
-	rm -f $(TRG) $(OBJ)
