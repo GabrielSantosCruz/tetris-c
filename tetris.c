@@ -7,11 +7,16 @@
 
 #define WIDTH 10
 #define HEIGHT 20
-#define TETROMINOES_QUANT 7
+#define TETROMINOES_QUANT 8
 
 // Matriz de tetrominos
 int tetrominoes[TETROMINOES_QUANT][4][4] = {
     { // I
+        {0, 1, 0, 0},
+        {0, 1, 0, 0},
+        {0, 1, 0, 0},
+        {0, 1, 0, 0}
+    },{ // I
         {0, 0, 0, 0},
         {1, 1, 1, 1},
         {0, 0, 0, 0},
@@ -51,10 +56,12 @@ int tetrominoes[TETROMINOES_QUANT][4][4] = {
 // Campo de jogo
 int board[HEIGHT][WIDTH] = {0};
 
-// Posição atual da peça
-int currentX, currentY;
+
+int currentX, currentY; // Posição atual da peça
 int currentPiece;   // Índice da peça atual
 int nextPiece;      // Índice da próxima peça
+
+int score = 0;
 
 // Função para escolher um índice de peça aleatório
 int getRandomPiece() {
@@ -89,11 +96,39 @@ bool checkCollision(int x, int y) {
     return false;
 }
 
+/* Função que remove as linhas que estão completas da matriz do jogo e move tudo que está em cima para baixo */
+void removeFullLines() {
+    for (int i = HEIGHT - 1; i >= 0; i--) {
+        bool fullLine = true;
+        for (int j = 0; j < WIDTH; j++) {
+            if (board[i][j] == 0) {
+                fullLine = false;
+                break;
+            }
+        }
+        if (fullLine) {
+            // Remove a linha e atualiza a pontuação
+            score += 100; // Adiciona 100 pontos por linha completa
+            // Move todas as linhas acima uma linha para baixo
+            for (int k = i; k > 0; k--) {
+                for (int j = 0; j < WIDTH; j++) {
+                    board[k][j] = board[k - 1][j];
+                }
+            }
+            // Limpa a linha superior
+            for (int j = 0; j < WIDTH; j++) {
+                board[0][j] = 0;
+            }
+            i++; // Verifica a linha novamente
+        }
+    }
+}
+
+
 /* Função para desenhar o campo de jogo (com a peça temporária)
 */
 void drawBoard() {
     clear(); // Usa ncurses para limpar a tela
-    
     // Desenha o tabuleiro fixo
     for (int i = 0; i < HEIGHT; i++) {
         for (int j = 0; j < WIDTH; j++) {
@@ -117,16 +152,17 @@ void drawBoard() {
     }
 
     // Desenha a próxima peça
-    mvprintw(1, 11, "PROXIMA PECA:");
+    mvprintw(2, 11, "PROXIMA PECA:");
     int nextPieceHeight = sizeof(tetrominoes[nextPiece]) / sizeof(tetrominoes[nextPiece][0]);
     for (int i = 0; i < nextPieceHeight; i++) {
         for (int j = 0; j < 4; j++) {
             if (tetrominoes[nextPiece][i][j]) {
-                mvprintw(2 + i, 11 + j, "@"); // Ajuste as coordenadas (30, 12) conforme necessário
+                mvprintw(3 + i, 12 + j, "@"); // Ajuste as coordenadas (30, 12) conforme necessário
             }
         }
     }
 
+    mvprintw(0, 11, "PONTUACAO: %d", score);
 
     refresh(); // Atualiza a tela ncurses
 }
@@ -141,6 +177,7 @@ void placePiece() {
             }
         }
     }
+    removeFullLines();
 }
 
 /* Função para mover a peça 
