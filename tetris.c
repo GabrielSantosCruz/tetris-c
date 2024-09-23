@@ -7,48 +7,32 @@
 
 #define WIDTH 10
 #define HEIGHT 20
-#define TETROMINOES_QUANT 8
+#define TETROMINOES_QUANT 6
 
 // Matriz de tetrominos
 int tetrominoes[TETROMINOES_QUANT][4][4] = {
-    { // I
-        {0, 1, 0, 0},
-        {0, 1, 0, 0},
-        {0, 1, 0, 0},
-        {0, 1, 0, 0}
-    },{ // I
-        {0, 0, 0, 0},
-        {1, 1, 1, 1},
-        {0, 0, 0, 0},
-        {0, 0, 0, 0}
-    },
+    // falta colocar/mudar as peças 
     { // O
+        {1, 1},
+        {0, 0}
+    },{ // O
+        {0, 1},
+        {1, 1}
+    }, { // O
+        {1, 0},
+        {1, 1}
+    },{ // O
         {1, 1},
         {1, 1}
     },
     { // T
-        {0, 1, 0},
+        {0, 0, 0},
         {1, 1, 1},
         {0, 0, 0}
     },
     { // J
-        {1, 0, 0},
+        {0, 1, 0},
         {1, 1, 1},
-        {0, 0, 0}
-    },
-    { // L
-        {0, 0, 1},
-        {1, 1, 1},
-        {0, 0, 0}
-    },
-    { // S
-        {0, 1, 1},
-        {1, 1, 0},
-        {0, 0, 0}
-    },
-    { // Z
-        {1, 1, 0},
-        {0, 1, 1},
         {0, 0, 0}
     }
 };
@@ -60,7 +44,7 @@ int board[HEIGHT][WIDTH] = {0};
 int currentX, currentY; // Posição atual da peça
 int currentPiece;   // Índice da peça atual
 int nextPiece;      // Índice da próxima peça
-
+bool isPaused = false;
 int score = 0;
 
 // Função para escolher um índice de peça aleatório
@@ -219,7 +203,7 @@ void gameLoop() {
     
     nodelay(stdscr, TRUE); // Faz com que getch() não bloqueie o loop (para entradas com o teclado)
     while (1) {
-        if (isGameOver()) { // condicao para mostrar a tela de fim de jogo
+        if (isGameOver()) { // Verifica se o jogo acabou
             clear();
             mvprintw(HEIGHT / 2, WIDTH / 2 - 5, "GAME OVER");
             refresh();
@@ -227,35 +211,44 @@ void gameLoop() {
             endwin(); // Fecha a janela ncurses
             exit(0); // Encerra o programa
         }
-        drawBoard(); // Desenha o tabuleiro
-        
+
+        if (!isPaused) {
+            drawBoard(); // Desenha o tabuleiro enquanto não está pausado
+            
+            // Controle do tempo para a peça descer automaticamente
+            clock_t currentTime = clock();
+            if ((currentTime - lastMoveTime) * 100000 / CLOCKS_PER_SEC > speed) {
+                movePiece(0, 1); // Move a peça para baixo automaticamente
+                lastMoveTime = currentTime; // Atualiza o tempo da última queda
+            }
+        } else {
+            mvprintw(HEIGHT / 2, WIDTH / 2 - 5, "PAUSED");
+            refresh();
+        }
+
         ch = getch(); // Captura a tecla pressionada (não bloqueia o programa)
         
         // Verifica se o usuário pressionou alguma tecla
         if (ch != ERR) {
             switch (ch) {
                 case 'a': // Mover para a esquerda
-                    movePiece(-1, 0);
+                    if (!isPaused) movePiece(-1, 0);
                     break;
                 case 'd': // Mover para a direita
-                    movePiece(1, 0);
+                    if (!isPaused) movePiece(1, 0);
                     break;
                 case 's': // Mover mais rápido para baixo
-                    movePiece(0, 1);
+                    if (!isPaused) movePiece(0, 1);
+                    break;
+                case 'p': // Pausar ou retomar o jogo
+                    isPaused = !isPaused; // Alterna o estado de pausa
                     break;
                 case 'q': // Sair do jogo
                     endwin(); // Fecha a janela ncurses
                     exit(0);
             }
         }
-        
-        // Controle de tempo para a peça descer automaticamente
-        clock_t currentTime = clock();
-        if ((currentTime - lastMoveTime) * 100000 / CLOCKS_PER_SEC > speed) {
-            movePiece(0, 1); // Move a peça para baixo automaticamente
-            lastMoveTime = currentTime; // Atualiza o tempo da última queda
-        }
-        
+
         usleep(50000); // Pequeno atraso para evitar uso excessivo de CPU
     }
 }
