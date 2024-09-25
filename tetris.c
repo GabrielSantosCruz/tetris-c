@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <ncurses.h>
+// #include <ncurses.h>
 #include <unistd.h> // Para usleep()
 #include "vga.h"
+#include <stdbool.h>
+#include "button.h"
 
 #define WIDTH 10
 #define HEIGHT 20
@@ -17,7 +19,7 @@ int tetrominoes[TETROMINOES_QUANT][4][4] = {
         {0, 0}
     },{ 
         {1, 0},
-        {1, 0}
+        {1, 0}  
     },{ 
         {0, 1},
         {1, 1}
@@ -68,7 +70,7 @@ int board[HEIGHT][WIDTH] = {0};
 int currentX, currentY; // Posição atual da peça
 int currentPiece;   // Índice da peça atual
 int nextPiece;      // Índice da próxima peça
-bool isPaused = false;
+bool isPaused = false; // estado de pausa do jogo
 int score = 0;
 
 // Função para escolher um índice de peça aleatório
@@ -79,7 +81,6 @@ int getRandomPiece() {
 // Inicializa a próxima peça
 void initializeNextPiece() {
     nextPiece = getRandomPiece();
-    printw("%d", nextPiece);
 }
 
 // Inicializa a peça atual
@@ -135,7 +136,7 @@ void removeFullLines() {
 
 /* Função para desenhar o campo de jogo (com a peça temporária)
 */
-void drawBoard() {
+/* void drawBoard() {
     clear(); // Usa ncurses para limpar a tela
     // Desenha o tabuleiro fixo
     for (int i = 0; i < HEIGHT; i++) {
@@ -173,7 +174,7 @@ void drawBoard() {
     mvprintw(0, 11, "PONTUACAO: %d", score);
 
     refresh(); // Atualiza a tela ncurses
-}
+} */
 
 // Função para adicionar a peça ao campo (ajustada para lidar com tamanhos de peças menores)
 void placePiece() {
@@ -205,7 +206,7 @@ void movePiece(int dx, int dy) {
 
 // Função para inicializar o jogo, definindo as posições das peças e o valor randomico delas
 void initGame() {
-    srand(time(NULL));
+    // srand(time(NULL));
     initializeCurrentPiece();
     currentX = WIDTH / 2 - 2;
     currentY = 0;
@@ -218,6 +219,7 @@ bool isGameOver() {
 
 // Função principal do jogo
 void gameLoop() {
+    
     int ch;
     initGame();
     
@@ -225,35 +227,44 @@ void gameLoop() {
     int speed = 500; // Velocidade de queda (500 milissegundos)
     clock_t lastMoveTime = clock();
     
-    nodelay(stdscr, TRUE); // Faz com que getch() não bloqueie o loop (para entradas com o teclado)
+    // nodelay(stdscr, TRUE); // Faz com que getch() não bloqueie o loop (para entradas com o teclado)
     while (1) {
+        buttonPressed();
         if (isGameOver()) { // Verifica se o jogo acabou
-            clear();
-            mvprintw(HEIGHT / 2, WIDTH / 2 - 5, "GAME OVER");
-            refresh();
+            // clear();
+            // mvprintw(HEIGHT / 2, WIDTH / 2 - 5, "GAME OVER");
+            // refresh();
             usleep(3000000); // Pausa de 3 segundos para exibir o Game Over
-            endwin(); // Fecha a janela ncurses
+            // endwin(); // Fecha a janela ncurses
             exit(0); // Encerra o programa
         }
 
+
         if (!isPaused) {
-            drawBoard(); // Desenha o tabuleiro enquanto não está pausado
-            
+            // drawBoard(); // Desenha o tabuleiro enquanto não está pausado
+            drawMonitor(HEIGHT, WIDTH, board, 4, 4, currentPiece, tetrominoes, currentX, currentY, nextPiece);
             // Controle do tempo para a peça descer automaticamente
             clock_t currentTime = clock();
-            if ((currentTime - lastMoveTime) * 100000 / CLOCKS_PER_SEC > speed) {
+            if ((currentTime - lastMoveTime) * 10000 / CLOCKS_PER_SEC > speed) {
                 movePiece(0, 1); // Move a peça para baixo automaticamente
                 lastMoveTime = currentTime; // Atualiza o tempo da última queda
             }
         } else {
-            mvprintw(HEIGHT / 2, WIDTH / 2 - 5, "PAUSED");
-            refresh();
+            // mvprintw(HEIGHT / 2, WIDTH / 2 - 5, "PAUSED");
+            // refresh();
+
+            // TELA DE PAUSADO AQUI
         }
 
-        ch = getch(); // Captura a tecla pressionada (não bloqueia o programa)
+        if(buttonPressed() == 1){
+            isPaused = !isPaused;
+            printf("botao de pausa pressionado\n");
+        }
+
+        // ch = getch(); // Captura a tecla pressionada (não bloqueia o programa)
         
         // Verifica se o usuário pressionou alguma tecla
-        if (ch != ERR) {
+        /* if (ch != ERR) {
             switch (ch) {
                 case 'a': // Mover para a esquerda
                     if (!isPaused) movePiece(-1, 0);
@@ -271,20 +282,20 @@ void gameLoop() {
                     endwin(); // Fecha a janela ncurses
                     exit(0);
             }
-        }
+        } */
 
         usleep(50000); // Pequeno atraso para evitar uso excessivo de CPU
     }
 }
 
 int main() {
-    initscr(); // Inicializa a tela ncurses
-    noecho(); // Não exibe as teclas digitadas
-    cbreak(); // Desativa o buffer de linha
-    keypad(stdscr, TRUE); // Habilita teclas especiais
-    curs_set(0); // Oculta o cursor
+    // initscr(); // Inicializa a tela ncurses
+    // noecho(); // Não exibe as teclas digitadas
+    // cbreak(); // Desativa o buffer de linha
+    // keypad(stdscr, TRUE); // Habilita teclas especiais
+    // curs_set(0); // Oculta o cursor
     initializeNextPiece();
     gameLoop(); // Inicia o loop do jogo
-    endwin(); // Finaliza a janela ncurses
+    // endwin(); // Finaliza a janela ncurses
     return 0;
 }

@@ -5,36 +5,73 @@
 #define video_GREEN 0x07E0
 #define video_ORANGE 0xFC00
 #define video_WHITE 0xFFFF
+#define video_PINK 0xFC18
 
-void drawMonitor(int rows, int cows, int matriz[rows][cows]){
+#define BLOCK_SIZE 11
 
+void drawMonitor(int rows, int cows, int matriz[rows][cows], int rows2, int cows2, int currentPiece, int tetrominoes[currentPiece][rows2][cows2], int currentX, int currentY, int nextPiece){
+    
     if(video_open() == 1){
-        // clearVGA();
-        // delay(300);
         video_clear();
-        // desenhar uma borda quadrada em volta do tabuleiro
+        video_erase();
+
+        video_box(100, 0, 221, 239, video_WHITE); // desenha o retangulo branco lá
+
+
+
+        // desenha a matriz principal
         for(int i = 0; i < rows; i++){
             for(int j = 0; j < cows; j++){
                 switch(matriz[i][j]){
-                    case 2:
-                    case 3:
-                    case 4:
-                    case 5:
-                    case 6:
-                        video_box((j*11+90), (i*11+10), (j*11+10+90), (i*11+10+10), video_GREEN); // cor do tabuleiro
+                   
+                    case 1: // desenha a peça da matriz do jogo
+                        video_box(
+                            (j*BLOCK_SIZE+90+(j-1)), 
+                            (i*BLOCK_SIZE+(i-1)), 
+                            (j*BLOCK_SIZE+10+90+(j-1)), 
+                            (i*BLOCK_SIZE+10+(i-1)), video_ORANGE); // cor da peca
                         continue;
-                    case 1:
-                        video_box((j*11+90), (i*11+10), (j*11+10+90), (i*11+10+10), video_ORANGE);
-                        continue;
-                    case 0:
-                        video_box((j*11+90), (i*11+10), (j*11+10+90), (i*11+10+10), video_WHITE); // cor do fundo
+
+                    /* case 0:
+                        video_box((j*BLOCK_SIZE+90), (i*BLOCK_SIZE+10), (j*BLOCK_SIZE+10+90), (i*BLOCK_SIZE+10+10), video_WHITE); // cor do fundo */
                    
                 }
             }
         }
+        
+        // O PROBLEMA ESTÁ AQUI!!!!!!
+        // Desenha a peça temporariamente (antes de colidir)
+        int pieceHeight = (currentPiece == 1) ? 2 : 4;
+        for (int i = 0; i < pieceHeight; i++) {
+            for (int j = 0; j < 4; j++) {
+                if (tetrominoes[currentPiece][i][j]) {
+                    video_box(
+                            (j*BLOCK_SIZE+11*currentX+90+(j-1)+3), 
+                            (i*BLOCK_SIZE+11*currentY+(i-1)+1), 
+                            (j*BLOCK_SIZE+11*currentX+10+90+(j-1)+3), 
+                            (i*BLOCK_SIZE+11*currentY+10+(i-1)+1), 
+                            video_GREEN);
+                }
+            }
+        }
+
+        // OK
+        // desenha a proxima peca no tabuleiro
+        int nextPieceHeight = sizeof(tetrominoes[nextPiece]) / sizeof(tetrominoes[nextPiece][0]);
+        video_text(60, 5, "PROXIMA PECA: ");
+        for (int i = 0; i < nextPieceHeight; i++) {
+            for (int j = 0; j < 4; j++) {
+                if (tetrominoes[nextPiece][i][j]) {
+                    video_box(
+                    (j*BLOCK_SIZE+250+(j-1)), 
+                    (i*BLOCK_SIZE+40+(i-1)), 
+                    (j*BLOCK_SIZE+10+250+(j-1)), 
+                    (i*BLOCK_SIZE+40+10+(i-1)), video_PINK);
+                }
+            }
+        }
+
         video_show();                
-        
-        
         video_close();
 
         // video_show();
@@ -45,8 +82,11 @@ void drawMonitor(int rows, int cows, int matriz[rows][cows]){
 }
 
 void clearVGA(){
+    video_erase();
     video_clear();
     video_show();
+    
+    video_erase();
     video_clear();
     video_show();
 }
