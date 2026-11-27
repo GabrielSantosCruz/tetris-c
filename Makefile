@@ -1,28 +1,43 @@
 CC = gcc
-CFLAGS = -std=c99
-SRC = tetris.c vga.c button.c ADXL345.c
-TRG = main
-TAGS = lintelfpgaup
+CFLAGS = -std=c99 -Iinclude
+LDFLAGS = -lintelfpgaup -lpthread
+
+SRC_DIR = src
+DRV_DIR = $(SRC_DIR)/drivers
+INC_DIR = include
+BUILD_DIR = build
+TEST_DIR = tests
+
+TRG = $(BUILD_DIR)/main
+OBJS = $(BUILD_DIR)/tetris.o $(BUILD_DIR)/vga.o $(BUILD_DIR)/button.o $(BUILD_DIR)/ADXL345.o
+
+.PHONY: all run clean test
 
 all: $(TRG)
 
-$(TRG): tetris.o vga.o button.o ADXL345.o
-	$(CC) $(CFLAGS) -o $(TRG) tetris.o vga.o button.o ADXL345.o -$(TAGS) -lpthread
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
 
-tetris.o: tetris.c vga.h ADXL345.h
-	$(CC) $(CFLAGS) -c tetris.c -$(TAGS) -lpthread
+$(TRG): $(OBJS) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS)
 
-vga.o: vga.c vga.h
-	$(CC) $(CFLAGS) -c vga.c -$(TAGS) -lpthread
+$(BUILD_DIR)/tetris.o: $(SRC_DIR)/tetris.c $(INC_DIR)/vga.h $(INC_DIR)/button.h $(INC_DIR)/ADXL345.h | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
 
-button.o: button.c button.h
-	$(CC) $(CFLAGS) -c button.c -$(TAGS) -lpthread
+$(BUILD_DIR)/vga.o: $(DRV_DIR)/vga.c $(INC_DIR)/vga.h | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
 
-ADXL345.o: ADXL345.c ADXL345.c
-	$(CC) $(CFLAGS) -c ADXL345.c -$(TAGS) -lpthread
+$(BUILD_DIR)/button.o: $(DRV_DIR)/button.c $(INC_DIR)/button.h | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/ADXL345.o: $(DRV_DIR)/ADXL345.c $(INC_DIR)/ADXL345.h $(INC_DIR)/address_map_arm.h $(INC_DIR)/physical.h | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+test: $(TEST_DIR)/testbutton.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $(BUILD_DIR)/testbutton $<
 
 run: $(TRG)
 	./$(TRG)
 
 clean:
-	rm -f $(TRG) *.o
+	rm -rf $(BUILD_DIR)/*.o $(TRG) $(BUILD_DIR)/testbutton
